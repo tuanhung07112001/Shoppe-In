@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon"
+        href="https://scontent.fhan4-3.fna.fbcdn.net/v/t39.30808-6/258872306_1630710437266810_6072463976543713541_n.jpg?_nc_cat=100&ccb=1-7&_nc_sid=6ee11a&_nc_eui2=AeEel-CrnVM1pHmY3pwAFMZxlTTZqHY0mbaVNNmodjSZtq2h_rVAPh3qYyEKmbn0hI8e-Yxl0lenOm_9mLXKCTNG&_nc_ohc=u3QJ3Mgu59QQ7kNvgEr02gX&_nc_ht=scontent.fhan4-3.fna&_nc_gid=AfW7f-nP30IVHN1DQanEqOR&oh=00_AYCr15_T4Xsf1bOdKRcUlVGLXG_1OdcAdDovOQGWi6-5WQ&oe=66EE3182"
+        type="image/x-icon">
+    <title>Call Shopee API</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        form {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        label {
+            font-weight: bold;
+            color: #555;
+        }
+
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            background-color: #4CAF50;
+            color: white;
+            padding: 14px 20px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        table,
+        th,
+        td {
+            border: 1px solid #ddd;
+        }
+
+        th,
+        td {
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            color: #333;
+        }
+
+        .success {
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        .failure {
+            color: #dc3545;
+            font-weight: bold;
+        }
+
+        #overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        #overlay h1 {
+            color: white;
+            font-size: 30px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Call Shopee API</h1>
+    <form id="apiForm">
+        <label for="spc_cds">Nhập SPC_CDS:</label>
+        <input type="text" id="spc_cds" name="spc_cds" placeholder="Nhập SPC_CDS">
+
+        <label for="spc_si">Nhập SPC_SI:</label>
+        <input type="text" id="spc_si" name="spc_si" placeholder="Nhập SPC_SI">
+
+        <label for="spc_sc_session">Nhập SPC_SC_SESSION:</label>
+        <input type="text" id="spc_sc_session" name="spc_sc_session" placeholder="Nhập SPC_SC_SESSION">
+
+        <label for="keywords">Nhập danh sách từ khóa (cách nhau bởi dấu cách):</label>
+        <input type="text" id="keywords" name="keywords" placeholder="VD: keyword1 keyword2 keyword3">
+
+        <button type="button" onclick="callAPIs()">Submit</button>
+    </form>
+
+    <h2>Kết quả</h2>
+    <table id="resultTable">
+        <thead>
+            <tr>
+                <th>Mã vận đơn</th>
+                <th>Order ID</th>
+                <th>Package Number</th>
+                <th>Channel ID</th> 
+                <th>Job ID</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+
+    <div id="overlay">
+        <h1>Loading...</h1>
+    </div>
+
+    <script>
+        function showOverlay() {
+            document.getElementById('overlay').style.display = 'flex';
+        }
+
+        function hideOverlay() {
+            document.getElementById('overlay').style.display = 'none';
+        }
+
+       async function callAPIs() {
+            const spc_cds = document.getElementById('spc_cds').value.trim();
+            const spc_si = document.getElementById('spc_si').value.trim();
+            const spc_sc_session = document.getElementById('spc_sc_session').value.trim();
+            const keywordsInput = document.getElementById('keywords').value.trim();
+
+            if (!spc_cds || !spc_si || !spc_sc_session || !keywordsInput) {
+                alert('Vui lòng nhập đầy đủ thông tin');
+                return;
+            }
+
+            const keywords = keywordsInput.split(' ');
+
+            const resultTableBody = document.querySelector('#resultTable tbody');
+            resultTableBody.innerHTML = '';
+
+            showOverlay();
+
+            for (const keyword of keywords) {
+                try {
+                    // Gọi đến proxy server trên Railway
+                    const proxyResponse = await fetch('https://server-proxy-shoppe-production.up.railway.app/api/proxy', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            spc_cds,
+                            spc_si,
+                            spc_sc_session,
+                            keyword
+                        })
+                    });
+
+                    const proxyData = await proxyResponse.json();
+                    console.log("proxyData", proxyData);
+
+                    if (proxyData.success) {
+                        const row = `
+                    <tr>
+                        <td>${keyword}</td>
+                        <td>${proxyData.order_id}</td>
+                        <td>${proxyData.package_number}</td>
+                        <td>${proxyData.channel_id}</td>
+                        <td>${proxyData.job_id}</td> <!-- Hiển thị Job ID -->
+                    </tr>
+                `;
+                        resultTableBody.innerHTML += row;
+                    } else {
+                        const row = `
+                    <tr>
+                        <td>${keyword}</td>
+                        <td>Không tìm thấy đơn hàng</td>
+                        <td>${proxyData.message}</td>
+                        <td></td>
+                    </tr>
+                `;
+                        resultTableBody.innerHTML += row;
+                    }
+                    if (proxyData.job_id) {
+                        const url = `https://banhang.shopee.vn/awbprint?job_id=${proxyData.job_id}&shop_id=469040198&first_time=0`;
+                        window.open(url, '_blank');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    const row = `
+                <tr>
+                    <td>${keyword}</td>
+                    <td>Lỗi khi gọi API</td>
+                    <td></td>
+                    <td></td>
+                </tr>
+            `;
+                    resultTableBody.innerHTML += row;
+                }
+            }
+            // if(proxyData.job_id){
+            //     const url = `https://banhang.shopee.vn/awbprint?job_id=${proxyData.job_id}&shop_id=469040198&first_time=0`;
+            //     window.open(url, '_blank');
+            // }
+            hideOverlay();
+        }
+    </script>
+</body>
+
+</html>
